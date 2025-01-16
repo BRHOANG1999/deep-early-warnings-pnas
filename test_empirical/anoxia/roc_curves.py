@@ -32,16 +32,16 @@ import scipy.stats as stats
 bool_pred_early = True
 
 # Import EWS data
-df_ews_forced = pd.read_csv('data/ews/df_ews_forced.csv')
-df_ews_null = pd.read_csv('data/ews/df_ews_null.csv')
+df_ews_forced = pd.read_csv('C:/Users/Brandon/repositories/deep-early-warnings-pnas/test_empirical/anoxia/data/ews/df_ews_forced.csv')
+df_ews_null = pd.read_csv('C:/Users/Brandon/repositories/deep-early-warnings-pnas/test_empirical/anoxia/data/ews/df_ews_null.csv')
  
 # Import kendall tau data
-df_ktau_forced = pd.read_csv('data/ews/df_ktau_forced.csv')
-df_ktau_null = pd.read_csv('data/ews/df_ktau_null.csv')
+df_ktau_forced = pd.read_csv('C:/Users/Brandon/repositories/deep-early-warnings-pnas/test_empirical/anoxia/data/ews/df_ktau_forced.csv')
+df_ktau_null = pd.read_csv('C:/Users/Brandon/repositories/deep-early-warnings-pnas/test_empirical/anoxia/data/ews/df_ktau_null.csv')
 
 # Import ML prediction data
-df_ml_forced = pd.read_csv('data/ml_preds/parsed/df_ml_forced.csv')
-df_ml_null = pd.read_csv('data/ml_preds/parsed/df_ml_null.csv')
+df_ml_forced = pd.read_csv('C:/Users/Brandon/repositories/deep-early-warnings-pnas/test_empirical/anoxia/data/ml_preds/parsed/df_ml_forced.csv')
+df_ml_null = pd.read_csv('C:/Users/Brandon/repositories/deep-early-warnings-pnas/test_empirical/anoxia/data/ml_preds/parsed/df_ml_null.csv')
 
 
 # Add column for truth values (1 for forced, 0 for null)
@@ -202,7 +202,7 @@ df_counts = pd.DataFrame({
 )
 
 # Export data on bifurcation prediction counts
-filepath = 'data/roc/df_bif_pred_counts_{}.csv'.format(
+filepath = 'C:/Users/Brandon/repositories/deep-early-warnings-pnas/test_empirical/anoxia/data/roc/df_bif_pred_counts_{}.csv'.format(
     'early' if bool_pred_early else 'late')
 
 df_counts.to_csv(filepath,
@@ -290,7 +290,7 @@ df_roc_plot = pd.concat(list_roc, ignore_index=True)
 
 
 # Export ROC data
-filepath = 'data/roc/df_roc_anoxia_{}.csv'.format(
+filepath = 'C:/Users/Brandon/repositories/deep-early-warnings-pnas/test_empirical/anoxia/data/roc/df_roc_anoxia_{}.csv'.format(
     'early' if bool_pred_early else 'late')
 
 df_roc_plot.to_csv(filepath,
@@ -402,7 +402,7 @@ fig.update_layout(
     )
 
 
-fig.write_image('figures/figs_roc/roc_anoxia_{}.png'.format('early' if bool_pred_early else 'late'))
+fig.write_image('C:/Users/Brandon/repositories/deep-early-warnings-pnas/test_empirical/anoxia/figures/figs_roc/roc_anoxia_{}.png'.format('early' if bool_pred_early else 'late'))
 
 
 

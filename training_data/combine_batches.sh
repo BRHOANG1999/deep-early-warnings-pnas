@@ -11,7 +11,7 @@ ts_len=$2 # time series length
 
 
 # Run Python file to stack the label and group data
-python3 stack_labels_groups.py $num_batches $ts_len
+python stack_labels_groups.py $num_batches $ts_len
 
 # Move time series data from batches to combined directory
 mkdir -p output/ts_$ts_len/combined/output_sims

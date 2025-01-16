@@ -17,8 +17,11 @@ import plotly.graph_objs as go
 
 import ewstools
 
+import os
+print(os.getcwd()) 
+
 # Import transition data
-df = pd.read_csv('data/data_transitions.csv')
+df = pd.read_csv('C:/Users/Brandon/repositories/deep-early-warnings-pnas/test_empirical/anoxia/data/data_transitions.csv')
 
 # EWS computation parameters
 
@@ -40,12 +43,14 @@ smooth = 'Gaussian'
 list_df = []
 list_tsid = df['tsid'].unique()
 for tsid in list_tsid:
+    # Get record-specific data for the entire time series
+    df_temp = df[df['tsid'] == tsid]
     
-    # Get record specific data up to the transition point
-    df_temp = df[(df['tsid']==tsid)]
-    df_select = df_temp[
-        df_temp['Age [ka BP]']>=df_temp['t_transition_start'].iloc[0]
-        ].copy()
+    # Copy the entire data series without filtering
+    df_select = df_temp.copy()
+    
+    # Append the dataframe to the list
+    list_df.append(df_select)
     
     # Make time negative so it increaes up to transition
     df_select['Age [ka BP]'] = -df_select['Age [ka BP]']
@@ -70,7 +75,7 @@ for tsid in list_tsid:
     df_ews['Variable label'] = 'Mo'
     
     # Export residuals for ML
-    df_ews[['Residuals']].reset_index().round(6).to_csv('data/resids/resids_anoxia_forced_mo_{}.csv'.format(tsid),index=False)
+    df_ews[['Residuals']].reset_index().round(6).to_csv('C:/Users/Brandon/repositories/deep-early-warnings-pnas/test_empirical/anoxia/data/resids/resids_anoxia_forced_mo_{}.csv'.format(tsid),index=False)
     
     # Add to list
     list_df.append(df_ews)
@@ -104,7 +109,7 @@ for tsid in list_tsid:
 df_ews = pd.concat(list_df)
 
 # Export ews dataframe
-df_ews.to_csv('data/ews/df_ews_forced.csv')
+df_ews.to_csv('C:/Users/Brandon/repositories/deep-early-warnings-pnas/test_empirical/anoxia/data/ews/df_ews_forced.csv')
 
 
 

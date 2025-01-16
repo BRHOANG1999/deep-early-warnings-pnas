@@ -3,6 +3,9 @@ Code to generate ensemble predictions from the DL classifiers
 on a give time series of residuals
 
 '''
+import time
+# Start timing
+tic = time.time()
 
 
 import os
@@ -35,10 +38,34 @@ both the left and right.  2 is the model trained on data censored on the left on
 
 
 # Filepath to residual time series to make predictions on 
-filepath = '../test_models/may_fold_1500/data/resids/may_fold_1500_resids.csv'
+filepath = r'F:\EEG_SeizureTransitions\eeg_signal.csv'
 
 # Filepath to export ensemble DL predictions to
-filepath_out = '../test_models/may_fold_1500/data/ml_preds_test/ensemble_trend_probs_may_fold_forced_1_len1500.csv'
+filepath_out = r'C:\Users\Brandon\repositories\deep-early-warnings-pnas\test_models\seizure\ensemble_trend_probs_seizure_transition_1500_1.csv'
+
+# Parameters
+window_size = 1500  # Sliding window size
+step_size = 750     # Overlap between windows (e.g., 50% overlap)
+downsample_factor = 10  # Downsample by selecting every nth sample
+
+# Load and preprocess data
+print("Loading data...")
+df = pd.read_csv(filepath).dropna()
+resids = df.iloc[:, 1].values.reshape(1,-1,1)
+downsampled_data = resids[::downsample_factor]  # Downsample data
+total_samples = len(downsampled_data)
+seq_len = len(df)
+
+
+print(f"Original size: {len(resids)}, Downsampled size: {total_samples}")
+
+# Define function to generate sliding windows
+def generate_windows(data, window_size, step_size):
+    # Access the second dimension of the data (time series)
+    data = data[0, :, 0]  # Reshape from (1, 3599999, 1) to (3599999,)
+
+    for start in range(0, len(data) - window_size + 1, step_size):
+        yield data[start:start + window_size].reshape(1, window_size, 1)
 
 # Type of classifier to use (1500 or 500)
 ts_len=1500
@@ -62,15 +89,15 @@ pad_samples = 150
 
 
 
-# Load residual time series data
-df = pd.read_csv(filepath).dropna()
-resids = df['Residuals'].values.reshape(1,-1,1)
-# Length of inupt time series
-seq_len = len(df)
+# # Load residual time series data
+# df = pd.read_csv(filepath).dropna()
+# resids = df['Voltage'].values.reshape(1,-1,1)
+# # Length of inupt time series
+# seq_len = len(df)
 
 
 
-def get_dl_predictions(resids, model_type, kk):
+def get_dl_predictions(window, model_type, kk):
     
     '''
     Generate DL prediction time series on resids
@@ -78,11 +105,11 @@ def get_dl_predictions(resids, model_type, kk):
     '''
         
     # Setup file to store DL predictions
-    predictions_file_name = 'predictions/y_pred_{}_{}.csv'.format(kk,model_type)
+    predictions_file_name = r'C:\Users\Brandon\repositories\deep-early-warnings-pnas\dl_train\predictions\y_pred_{}_{}.csv'.format(kk,model_type)
     f1 = open(predictions_file_name,'w')
 
     # Load in specific DL classifier
-    model_name = 'best_models/best_model_{}_{}_len{}.pkl'.format(kk,model_type,ts_len)
+    model_name = r'C:\Users\Brandon\repositories\deep-early-warnings-pnas\dl_train\best_models\best_model_{}_{}_len{}.pkl'.format(kk,model_type,ts_len)
     model = load_model(model_name)
     
     # Loop through each possible length of padding
@@ -127,8 +154,8 @@ def get_dl_predictions(resids, model_type, kk):
                     
     
         # Write predictions to file
-        np.savetxt(f1, y_pred, delimiter=',')
-        print('Predictions computed for padding={}'.format(pad_count*mult_factor))
+        #np.savetxt(f1, y_pred, delimiter=',')
+        #print('Predictions computed for padding={}'.format(pad_count*mult_factor))
         
     # Delete model and do garbage collection to free up RAM
     tf.keras.backend.clear_session()
@@ -137,41 +164,73 @@ def get_dl_predictions(resids, model_type, kk):
     gc.collect()
     f1.close()
     
-    return 
+    return y_pred
 
 
 
 # Compute DL predictions from all 20 trained models
-for model_type in [1,2]:                                
-    for kk in np.arange(1,11):
-        print('Compute DL predictions for model_type={}, kk={}'.format(
-            model_type,kk))
+# for model_type in [1,2]:                                
+#     for kk in np.arange(1,11):
+#         print('Compute DL predictions for model_type={}, kk={}'.format(
+#             model_type,kk))
         
-        get_dl_predictions(resids, model_type, kk)
+#         get_dl_predictions(resids, model_type, kk)
+
+all_predictions = []
+
+print("Starting sliding window predictions...")
+for i, window in enumerate(generate_windows(downsampled_data, window_size, step_size)):
+    print(f"Processing window {i + 1}/{(total_samples - window_size) // step_size + 1}")
+
+    # Ensemble predictions
+    ensemble_window_preds = []
+    for model_type in [1, 2]:  # Model types
+        for kk in range(1, 11):  # 10 models per type
+            prediction = get_dl_predictions(window, model_type, kk)
+            ensemble_window_preds.append(prediction)
+
+    # Average predictions for the current window
+    window_mean_prediction = np.mean(ensemble_window_preds, axis=0)
+    all_predictions.append(window_mean_prediction)
+
+# Combine all predictions into a single array
+final_predictions = np.vstack(all_predictions)
 
 
 
 
 # Compute average prediction among all 20 DL classifiers
-list_df_preds = []
-for model_type in [1,2]:
-    for kk in np.arange(1,11):
-        filename = 'predictions/y_pred_{}_{}.csv'.format(kk,model_type)
-        df_preds = pd.read_csv(filename,header=None)
-        df_preds['time_index'] = df_preds.index
-        df_preds['model_type'] = model_type
-        df_preds['kk'] = kk
-        list_df_preds.append(df_preds)
+# list_df_preds = []
+# for model_type in [1,2]:
+#     for kk in np.arange(1,11):
+#         filename = r'C:\Users\Brandon\repositories\deep-early-warnings-pnas\dl_train\predictions\y_pred_{}_{}.csv'.format(kk,model_type)
+#         df_preds = pd.read_csv(filename,header=None)
+#         df_preds['time_index'] = df_preds.index
+#         df_preds['model_type'] = model_type
+#         df_preds['kk'] = kk
+#         list_df_preds.append(df_preds)
     
 
-# Concatenate
-df_preds_all = pd.concat(list_df_preds).reset_index(drop=True)
+# Save results to CSV
+print("Saving predictions...")
+np.savetxt(filepath_out, final_predictions, delimiter=',', fmt='%.4f')
 
-# Compute mean over all predictions
-df_preds_mean = df_preds_all.groupby('time_index').mean()
+toc = time.time()
+print(f"Finished! Total elapsed time: {toc - tic:.2f} seconds")
 
-# Export predictions
-df_preds_mean[[0,1,2,3]].to_csv(filepath_out,index=False,header=False)
+# # Concatenate
+# df_preds_all = pd.concat(list_df_preds).reset_index(drop=True)
+
+# # Compute mean over all predictions
+# df_preds_mean = df_preds_all.groupby('time_index').mean()
+
+# # End timing
+# toc = time.time()
+
+# print(f"Elapsed time: {toc - tic:.4f} seconds")
+
+# # Export predictions
+# df_preds_mean[[0,1,2,3]].to_csv(filepath_out,index=False,header=False)
 
 
 

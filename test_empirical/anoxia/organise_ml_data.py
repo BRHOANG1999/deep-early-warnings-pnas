@@ -20,16 +20,16 @@ import os
 
 # Make export directory if doens't exist
 try:
-    os.mkdir('data/ml_preds/parsed/')
+    os.mkdir('C:/Users/Brandon/repositories/deep-early-warnings-pnas/test_empirical/anoxia/data/ml_preds/parsed/')
 except:
     print('Path already exists')
     
 
 # Import EWS data (need time values for plot)
-df_ews_forced = pd.read_csv('data/ews/df_ews_forced.csv')
+df_ews_forced = pd.read_csv('C:/Users/Brandon/repositories/deep-early-warnings-pnas/test_empirical/anoxia/data/ews/df_ews_forced.csv')
 
 # Import all ML predictions
-path = 'data/ml_preds/'
+path = 'C:/Users/Brandon/repositories/deep-early-warnings-pnas/test_empirical/anoxia/data/ml_preds/'
 
 # Get all file names of null time series
 all_files = glob.glob(path + '*.csv')
@@ -58,20 +58,18 @@ for filename in all_files_forced:
     df['tsid'] = tsid  
     df['Variable label'] = var_label.capitalize()
     
-    # Get time values for this transition
-    tVals = df_ews_forced[(df_ews_forced['tsid']==tsid)&\
-                          (df_ews_forced['Variable label']==var_label.capitalize())\
-                          ]['Time'].values
-    
-    # Get ML time points
-    # 500 point classifier used
-    # Take last 500 time points of data
-    # Take every other 10 (we have 50 ML points)
-    tVals500 = tVals[-500:]
-    # If shorter than 500 points, pad with Nan
-    if len(tVals500)<500:
-        tVals500 = np.pad(tVals500, (500-len(tVals500),0), constant_values=np.nan)
-    # ML time points are spaced 10 apart
+    # Get all time values for the specific tsid and variable
+    tVals = df_ews_forced[(df_ews_forced['tsid'] == tsid) & 
+                        (df_ews_forced['Variable label'] == var_label.capitalize())]['Age [ka BP]'].values
+
+    # Check if there are sufficient data points for ML analysis
+    # Ensure at least 500 points, otherwise, pad with NaN
+    if len(tVals) < 500:
+        tVals500 = np.pad(tVals, (500 - len(tVals), 0), constant_values=np.nan)
+    else:
+        tVals500 = tVals[-500:]  # Take the last 500 points if available
+
+    # Select ML time points, spaced every 10 points
     ml_time_vals = tVals500[::10]
 
     # 30 time series points per ML data point
@@ -87,7 +85,7 @@ df_ml_forced = pd.concat(list_df_ml)
 df_ml_forced.sort_values(['Variable label','tsid', 'Time'],inplace=True,na_position='first')
 
 # # Export ML dataframe
-filepath = 'data/ml_preds/parsed/'
+filepath = 'C:/Users/Brandon/repositories/deep-early-warnings-pnas/test_empirical/anoxia/data/ml_preds/parsed/'
 df_ml_forced.to_csv(filepath+'df_ml_forced.csv', index=False)
 
 
@@ -115,11 +113,11 @@ for filename in all_files_null:
     df['tsid'] = tsid  
     df['Variable label'] = var_label.capitalize()
    
-    
-    # Get time values for this transition
-    tVals = df_ews_forced[(df_ews_forced['tsid']==tsid)&\
-                          (df_ews_forced['Variable label']==var_label.capitalize())\
-                          ]['Time'].values
+        
+    # Get Age values for this tsid and variable
+    tVals = df_ews_forced[(df_ews_forced['tsid'] == tsid) & 
+                        (df_ews_forced['Variable label'] == var_label.capitalize())]['Age [ka BP]'].values
+
      
     # Get ML time points
     # 500 point classifier used
@@ -145,7 +143,7 @@ df_ml_null = pd.concat(list_df_ml)
 df_ml_null.sort_values(['Variable label','tsid', 'Time'],inplace=True,na_position='first')
 
 # # Export ML dataframe
-filepath = 'data/ml_preds/parsed/'
+filepath = 'C:/Users/Brandon/repositories/deep-early-warnings-pnas/test_empirical/anoxia/data/ml_preds/parsed/'
 df_ml_null.to_csv(filepath+'df_ml_null.csv', index=False)
 
 
